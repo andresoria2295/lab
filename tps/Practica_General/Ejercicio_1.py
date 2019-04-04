@@ -2,23 +2,30 @@
 
 import os
 
+def lectura():
+    EOF = False
+    lectura_total = ""
+    tamanio = 10
+
+    while not EOF:
+        lectura_actual = os.read(1, tamanio)
+        lectura_total = lectura_total + lectura_actual
+
+        if len(lectura_actual) < tamanio:
+            EOF = True
+
+    return lectura_total
+
 print ("Ingresar conjunto de palabras: \n")
-lectura = os.read(0, 100)
+palabras = lectura()
 
 def reverse(string):
     string = "".join(reversed(string))
     return string
 
-print ("\n Conjunto de palabras: \n")
-os.write(1, lectura)
+print ("\n Conjunto de palabras con letras en orden inverso: \n")
 
-print ("\n Conjunto de letras en orden inverso:")
-os.write(1, reverse(lectura))
-print ("\n")
-
-print ("\n Conjunto de palabras y letras en orden inverso: \n")
-
-lista_lectura = lectura.split()
+lista_lectura = palabras.split()
 
 for string_lectura_invertido in lista_lectura:
     #string_lectura_invertido = ' '.join(lista_lectura)
