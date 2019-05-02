@@ -6,57 +6,94 @@ import getopt
 import os
 import multiprocessing
 
-def lecturaArchivo(ruta, tamanio):
+#Función para abrir y leer archivo ingresado por terminal.
+def LecturaArchivo(ruta, tamanio, cola_inicial):
     EOF = False
-    lectura_total = ""
-    q = multiprocessing.Queue()
 
-    # 1. Abrir archivo para lectura
+    #Abrir archivo para lectura.
     fd = os.open(ruta, os.O_RDONLY)
 
+    #Bucle para particionar y leer archivo por bloques.
     while not EOF:
-        # Leer x bytes del archivo
+        #Leer "x" bytes del archivo.
         lectura_actual = os.read(fd, tamanio)
-        q.put(lectura_actual)
-        # Adicionar a lo ya leido
-        lectura_total = lectura_total + lectura_actual
+        #Colocar los datos de la lectura del archivo en la cola.
+        cola_inicial.put(lectura_actual)
+        """Cuando el número de elementos sea menor que los "x" bytes exigidos por el usuario,
+        implica que el archivo fue leído en su totalidad y sale del bucle."""
         if len(lectura_actual) < tamanio:
             EOF = True
-
+    #Cerrar archivo.
     os.close(fd)
-    return q
 
+#Función de ayuda al usuario.
+def OpcAyuda(help):
+    print "\n Ejecución de Programa:\n"
+    print "Modo de uso: ./procesos.py -f [archivo o ruta de archivo] -n [tamaño en bytes de lectura de archivo]\n"
+    print "Ejemplo: ./procesos.py -f prueba.txt -n 1024\n"
 
-opciones, argumentos = getopt.getopt(sys.argv[1:], "f:n:")
-print opciones
+#Función para contar los elementos de un arreglo cuyo contenido es el archivo leído.
+def ContadorPalabras(lectura):
+    for caracter in "\n":
+        #Recorrer el contenido del archivo y reemplazar
+        lectura = lectura.replace(caracter, " ")
+    #Devolucón del número de elementos del arreglo que contiene los datos del archivo.
+    return len(lectura.split())
 
+#Función para colocar las palabras en la cola resultante.
+def AperturaProceso(cola_inicial, cola_final):
+    #Mientras que la cola que contiene los datos leídos no se encuentre vacía:
+    while cola_inicial.qsize() != 0:
+        #Extraer los datos de la cola y guardarlos dentro de una variable.
+        lectura = cola_inicial.get()
+        #Invocar la función ContadorPalabras.
+        palabras = ContadorPalabras(lectura)
+        #Colocar el número de elementos del arreglo que contiene los datos en una nueva cola.
+        cola_final.put(palabras)
+    return
+
+#Creación de colas por multiprocesamiento.
+cola_entrada = multiprocessing.Queue()
+cola_salida = multiprocessing.Queue()
+
+#Uso de getopt para indicar el archivo o ruta de archivo por consola y el número de bytes para la lectura en bloques del mismo.
+opciones, argumentos = getopt.getopt(sys.argv[1:], "f:n:h")
+
+#Bucle para recorrer el arreglo y localizar el archivo o ruta de archivo, y el número de bytes ingresados.
 for i in opciones:
-    if i[0] == "-f":
-        ruta_archivo = i[1]
-        print "Esto es una ruta de archivo. "
-    if i[0] == "-n":
-        valor_bytes = i[1]
-        print "Esto es un valor en bytes. "
+    if i[0] == "-h":
+        #La pos. 0 del arreglo constituye la opción -h.
+        ayuda = i[0]
+        #Llamada a función de ayuda para guiar al usuario.
+        OpcAyuda(ayuda)
+    else:
+        if i[0] == "-f":
+            #La pos. 1 del arreglo constituye la dirección del archivo.
+            ruta_archivo = i[1]
+        if i[0] == "-n":
+            #La pos. 1 del arreglo constituye los "x" bytes para la lectura en bloques del archivo.
+            valor_bytes = i[1]
 
-print ruta_archivo
-print valor_bytes
+#Llamada a función LecturaArchivo para abrir y leer archivo.
+LecturaArchivo(ruta_archivo, int(valor_bytes), cola_entrada)
 
-cola = lecturaArchivo(ruta_archivo, int(valor_bytes))
+#Apertura de procesos hijos.
+proceso_A = multiprocessing.Process(target = AperturaProceso, args = (cola_entrada, cola_salida))
+proceso_B = multiprocessing.Process(target = AperturaProceso, args = (cola_entrada, cola_salida))
 
-print cola.get()
+#Puesta en marcha y ejecución de procesos.
+proceso_A.start()
+proceso_B.start()
 
-print ("Proceso padre: " + str(os.getpid()))
+#Bloqueo de procesos.
+proceso_A.join()
+proceso_B.join()
 
-def aperturaProceso():
-    print("Proceso hijo: " + str(os.getpid()))
+#Contador de palabras.
+nro_palabras = 0
 
-proceso_1 = multiprocessing.Process(target = aperturaProceso)
-proceso_1.start()
-proceso_2 = multiprocessing.Process(target = aperturaProceso)
-proceso_2.start()
-
-'''
-palabras = cola.get()
-cont_palabras = palabras.split()
-print len(cont_palabras)
-'''
+#Mientras que la cola salida no se encuentre vacía:
+while(cola_salida.qsize() != 0):
+    #Sumatoria del número de palabras que contiene la cola salida.
+    nro_palabras = nro_palabras + int(cola_salida.get())
+    print "Palabras totales del archivo ingresado:", nro_palabras, "palabras."
