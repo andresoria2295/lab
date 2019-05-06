@@ -47,13 +47,13 @@ def PalabrasCola(cola_inicial, cola_final):
     return
 
 #Función para apertura y ejecución de procesos hijos.
-def AperturaProcesos(numero_procesos, cola_entrada, cola_salida):
+def AperturaProcesos():
     #Declarar lista.
     procesos = []
     #Colocar en lista el número de procesos.
     for contador in range(numero_procesos):
         #Apertura de procesos hijos.
-        ap_proceso = Process(target = PalabrasCola, args=(cola_entrada, cola_salida))
+        ap_proceso = multiprocessing.Process(target = PalabrasCola, args=(cola_entrada, cola_salida))
         #Adjuntar a lista la apertura de procesos hijos.
         procesos.append(ap_proceso)
         #Puesta en marcha y ejecución de procesos hijos.
@@ -64,15 +64,18 @@ def AperturaProcesos(numero_procesos, cola_entrada, cola_salida):
 #Función para vincular y enlazar procesos en ejecución.
 def UnionProcesos(listado_procesos):
     #Recorrer lista que contiene procesos.
-    for proc in listado_procesos:
+    for p in listado_procesos:
         #Bloqueo de proceso.
-        proc.join()
+        p.join()
 
 #Función de ayuda al usuario.
 def OpcAyuda():
     print "\n Ejecución de Programa:\n"
-    print "Modo de uso: ./procesos.py -f [archivo o ruta de archivo] -n [tamaño en bytes de lectura de archivo]\n"
-    print "Ejemplo: ./procesos.py -f prueba.txt -n 1024\n"
+    mensaje = "Modo de uso: ./procesos.py -f [archivo o ruta de archivo]"
+    mensaje += " -n [tamaño en bytes para lectura de archivo en bloques]"
+    mensaje += " -p [número de procesos para ejecución de archivo]\n"
+    print mensaje
+    print "Ejemplo: ./procesos.py -f prueba.txt -n 1024 -p 2\n"
     #Salir del programa.
     exit(0)
 
@@ -80,10 +83,12 @@ def OpcAyuda():
 cola_entrada = multiprocessing.Queue()
 cola_salida = multiprocessing.Queue()
 
-#Uso de getopt para indicar el archivo o ruta de archivo por consola y el número de bytes para la lectura en bloques del mismo.
+"""Uso de getopt para indicar el archivo o ruta de archivo por consola y
+el número de bytes para la lectura en bloques del mismo."""
 opciones, argumentos = getopt.getopt(sys.argv[1:], "f:n:p:h")
 
-#Bucle para recorrer el arreglo y localizar el archivo o ruta de archivo, y el número de bytes ingresados.
+"""Bucle para recorrer el arreglo y localizar el archivo o
+ruta de archivo, y el número de bytes ingresados."""
 ruta_archivo = ""
 valor_bytes = 0
 numero_procesos = 2
@@ -102,19 +107,19 @@ for i in opciones:
         numero_procesos = int(i[1])
 
 #Llamada a función AperturaProcesos para la puesta en marcha y ejeción de procesos.
-listado_procesos = AperturaProcesos(numero_procesos, cola_entrada, cola_salida)
+listado_procesos = AperturaProcesos()
 
 #Llamada a función LecturaArchivo para abrir y leer archivo.
 LecturaArchivo(ruta_archivo, int(valor_bytes), cola_entrada)
 
-#Llamada a función UnionProcesos para enlazar procesos. 
+#Llamada a función UnionProcesos para enlazar procesos.
 UnionProcesos(listado_procesos)
 
 #Contador de palabras.
 nro_palabras = 0
 
 #Mientras que la cola salida no se encuentre vacía:
-while(cola_salida.qsize() != 0):
+while cola_salida.qsize() != 0:
     #Sumatoria del número de palabras que contiene la cola salida.
     nro_palabras = nro_palabras + int(cola_salida.get())
     print "Palabras totales del archivo ingresado:", nro_palabras, "palabras."
