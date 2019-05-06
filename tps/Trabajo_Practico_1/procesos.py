@@ -26,12 +26,6 @@ def LecturaArchivo(ruta, tamanio, cola_inicial):
     #Cerrar archivo.
     os.close(fd)
 
-#Función de ayuda al usuario.
-def OpcAyuda(help):
-    print "\n Ejecución de Programa:\n"
-    print "Modo de uso: ./procesos.py -f [archivo o ruta de archivo] -n [tamaño en bytes de lectura de archivo]\n"
-    print "Ejemplo: ./procesos.py -f prueba.txt -n 1024\n"
-
 #Función para contar los elementos de un arreglo cuyo contenido es el archivo leído.
 def ContadorPalabras(lectura):
     for caracter in "\n":
@@ -41,7 +35,7 @@ def ContadorPalabras(lectura):
     return len(lectura.split())
 
 #Función para colocar las palabras en la cola resultante.
-def AperturaProceso(cola_inicial, cola_final):
+def PalabrasCola(cola_inicial, cola_final):
     #Mientras que la cola que contiene los datos leídos no se encuentre vacía:
     while cola_inicial.qsize() != 0:
         #Extraer los datos de la cola y guardarlos dentro de una variable.
@@ -52,42 +46,69 @@ def AperturaProceso(cola_inicial, cola_final):
         cola_final.put(palabras)
     return
 
+#Función para apertura y ejecución de procesos hijos.
+def AperturaProcesos(numero_procesos, cola_entrada, cola_salida):
+    #Declarar lista.
+    procesos = []
+    #Colocar en lista el número de procesos.
+    for contador in range(numero_procesos):
+        #Apertura de procesos hijos.
+        ap_proceso = Process(target = PalabrasCola, args=(cola_entrada, cola_salida))
+        #Adjuntar a lista la apertura de procesos hijos.
+        procesos.append(ap_proceso)
+        #Puesta en marcha y ejecución de procesos hijos.
+        ap_proceso.start()
+    #Lista con procesos hijos.
+    return procesos
+
+#Función para vincular y enlazar procesos en ejecución.
+def UnionProcesos(listado_procesos):
+    #Recorrer lista que contiene procesos.
+    for proc in listado_procesos:
+        #Bloqueo de proceso.
+        proc.join()
+
+#Función de ayuda al usuario.
+def OpcAyuda():
+    print "\n Ejecución de Programa:\n"
+    print "Modo de uso: ./procesos.py -f [archivo o ruta de archivo] -n [tamaño en bytes de lectura de archivo]\n"
+    print "Ejemplo: ./procesos.py -f prueba.txt -n 1024\n"
+    #Salir del programa.
+    exit(0)
+
 #Creación de colas por multiprocesamiento.
 cola_entrada = multiprocessing.Queue()
 cola_salida = multiprocessing.Queue()
 
 #Uso de getopt para indicar el archivo o ruta de archivo por consola y el número de bytes para la lectura en bloques del mismo.
-opciones, argumentos = getopt.getopt(sys.argv[1:], "f:n:h")
+opciones, argumentos = getopt.getopt(sys.argv[1:], "f:n:p:h")
 
 #Bucle para recorrer el arreglo y localizar el archivo o ruta de archivo, y el número de bytes ingresados.
+ruta_archivo = ""
+valor_bytes = 0
+numero_procesos = 2
+
 for i in opciones:
     if i[0] == "-h":
-        #La pos. 0 del arreglo constituye la opción -h.
-        ayuda = i[0]
         #Llamada a función de ayuda para guiar al usuario.
-        OpcAyuda(ayuda)
-    else:
-        if i[0] == "-f":
-            #La pos. 1 del arreglo constituye la dirección del archivo.
-            ruta_archivo = i[1]
-        if i[0] == "-n":
-            #La pos. 1 del arreglo constituye los "x" bytes para la lectura en bloques del archivo.
-            valor_bytes = i[1]
+        OpcAyuda()
+    if i[0] == "-f":
+        #La pos. 1 del arreglo constituye la dirección del archivo.
+        ruta_archivo = i[1]
+    if i[0] == "-n":
+        #La pos. 1 del arreglo constituye los "x" bytes para la lectura en bloques del archivo.
+        valor_bytes = int(i[1])
+    if i[0] == "-p":
+        numero_procesos = int(i[1])
+
+#Llamada a función AperturaProcesos para la puesta en marcha y ejeción de procesos.
+listado_procesos = AperturaProcesos(numero_procesos, cola_entrada, cola_salida)
 
 #Llamada a función LecturaArchivo para abrir y leer archivo.
 LecturaArchivo(ruta_archivo, int(valor_bytes), cola_entrada)
 
-#Apertura de procesos hijos.
-proceso_A = multiprocessing.Process(target = AperturaProceso, args = (cola_entrada, cola_salida))
-proceso_B = multiprocessing.Process(target = AperturaProceso, args = (cola_entrada, cola_salida))
-
-#Puesta en marcha y ejecución de procesos.
-proceso_A.start()
-proceso_B.start()
-
-#Bloqueo de procesos.
-proceso_A.join()
-proceso_B.join()
+#Llamada a función UnionProcesos para enlazar procesos. 
+UnionProcesos(listado_procesos)
 
 #Contador de palabras.
 nro_palabras = 0
