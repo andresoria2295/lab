@@ -122,4 +122,4 @@ nro_palabras = 0
 while cola_salida.qsize() != 0:
     #Sumatoria del número de palabras que contiene la cola salida.
     nro_palabras = nro_palabras + int(cola_salida.get())
-    print "Palabras totales del archivo ingresado:", nro_palabras, "palabras."
+print "Palabras totales del archivo ingresado:", nro_palabras, "palabras."
