@@ -22,7 +22,7 @@ El proceso padre debe mostrar al terminar, la cantidad total de palabras por la 
 ### Requerimientos
 
 * La aplicación debe contener como mínimo 3 funciones.
-* Debe procesar las opciones con getopt (agregar una opcion de ayuda).
+* Debe procesar las opciones con getopt (agregar una opcion de ayuda) o con argparse.
 * Debe usar el modulo multiprosessing.
 * Debe manejar los errores.
 
@@ -43,3 +43,7 @@ palabras totales: 2615
 * Manejo de archivos (apertura, escritura y cierre).
 * Creación de procesos.
 * Uso de mecanismos de IPC.
+
+### Bonus Track
+
+Se adicionará la opcion -p nro , para indicar cuantos hijos se crearán para procesar el archivo 
