@@ -4,66 +4,83 @@ import threading
 import time
 import random
 
+condition = threading.Condition()
+
 bote = []
 hinchas = []
 
 def hincha_river():
-    hinchas.append('r')
+    condition.acquire()
+    river_plate = 'riverplatense'
+    hinchas.append(river_plate)
     a_bordo()
+
+    if len(bote) == 4:
+        print("Cupo completo")
+        condition.wait()
 
 def hincha_boca():
-    hinchas.append('b')
+    condition.acquire()
+    boca_jrs = 'bostero'
+    hinchas.append(boca_jrs)
     a_bordo()
 
-def barra_brava_river(num_hinchas):
-    """ Generacion de hinchas de River"""
-    viajes = 0
-    while viajes < num_hinchas:
-        time.sleep(random.randrange(0, 5))
-        riv = threading.Thread(target = hincha_river)
-        riv.start()
-        viajes = viajes + 1
+    if len(bote) == 4:
+        print("Cupo completo")
+        condition.wait()
 
-def barra_brava_boca(num_hinchas):
-    """ Generacion de hinchas de Boca"""
+def barra_brava_river(num_hinchas_river):
     viajes = 0
-    while viajes < num_hinchas:
-        time.sleep(random.randrange(0, 5))
-        boc = threading.Thread(target = hincha_boca)
+
+    while viajes < num_hinchas_river:
+        riv = threading.Thread(target=hincha_river)
+        riv.start()
+        viajes += 1
+
+def barra_brava_boca(num_hinchas_boca):
+    viajes = 0
+
+    while viajes < num_hinchas_boca:
+        boc = threading.Thread(target=hincha_boca)
         boc.start()
-        viajes = viajes + 1
+        viajes += 1
 
 def a_bordo():
-        hincha = random.choice(hinchas)
-        hinchas.remove(hincha)
+    hincha_abordo = hinchas.pop()
 
-        if hincha == 'b':
-                print("vamos Boca")
-        else:
-                print("vamos River")
+    if hincha_abordo == 'bostero':
+        print ("Abordando al bote hincha bostero.")
+    else:
+        print ("Abordando al bote hincha riverplatense.")
+    time.sleep(2)
 
-        bote.append(hincha)
+    bote.append(hincha_abordo)
 
-        if len(bote) == 4:
-                a_remar()
+    if len(bote) == 4:
+        print ("\n Bote completo")
+        a_remar()
+
+    condition.release()
 
 def a_remar():
-        print("A remar!")
-        while True:
-            bote.pop()
-            if len(bote) == 0:
-                break;
+    print ("\n Zarpamos al Santiago Berabeu!!\n")
+    print ("Listado de hinchas presentes en el bote: ")
+    print (bote)
+    print ("\n")
 
-#t1 = threading.Thread()
-#t2 = threading.Thread()
+    while True:
+        for hincha_pasajero in range(4):
+            print("El hincha", bote.pop(), "ha descendido del bote.")
+            time.sleep(2)
+        if len(bote) == 0:
+            print("\n Bote vacío\n")
+            break
 
-barra_boca = threading.Thread(target=barra_brava_river, args=(8,))
-barra_river = threading.Thread(target=barra_brava_boca, args=(8,))
+River_Plate = threading.Thread(target=barra_brava_river, args=(12,))
+Boca_Juniors = threading.Thread(target=barra_brava_boca, args=(12,))
 
-barra_boca.start()
-barra_river.start()
+River_Plate.start()
+Boca_Juniors.start()
 
-barra_boca.join()
-barra_river.join()
-
-print("Terminaron los viajes ")
+River_Plate.join()
+Boca_Juniors.join()
