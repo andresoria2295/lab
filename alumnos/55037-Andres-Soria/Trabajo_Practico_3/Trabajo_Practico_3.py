@@ -1,42 +1,37 @@
 #!/usr/bin/python3
 
-import getopt
-import sys
-import argparse
-import socket
-import threading
+import socket, threading
 
-"""
-opciones, argumentos = getopt.getopt(sys.argv[1:], "f:h")
+def manejador(cliente, direccion):
+    peticion = cliente.recv(1024000)
+    #Creación de socket para conectarse a servidor remoto (S).
+    servidor_remoto = socket.socket()
+    # Conección a servidor remoto.
+    servidor_remoto.connect(("www.coto.com.ar", 80))
+    #Enviar petición a servidor remoto.
+    servidor_remoto.send(peticion)
+    #Tomar respuesta de servidor remoto.
+    respuesta = servidor_remoto.recv(1024)
+    print(peticion)
+    print("\n")
+    cliente.send(respuesta)
+    #servidor_remoto.close()
+    #cliente.close()
 
-ruta_archivo = "www.distribuidoraperu.com.ar"
-puerto = 5000
+# S - P - C
 
-for i in opciones:
-    if i[0] == "-f":
-        #La pos. 1 del arreglo constituye la dirección del archivo.
-        ruta_archivo = i[1]
-    if i[0] == "-p":
-        #La pos. 1 del arreglo constituye el puerto.
-        puerto = int(i[1])
+#Creación de socket para comunicacion entre cliente (C) y proxy (P).
+proxy_socket = socket.socket()
+proxy_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+#Especificación de direccion del socket.
+proxy_socket.bind(("127.0.0.1", 8080))
+#Hacer que el servidor escuche a nuevas conexiones.
+proxy_socket.listen()
 
-#Llamada a función LecturaArchivo para abrir y leer archivo.
-LecturaArchivo(ruta_archivo, int(puerto))
-"""
-
-analizador = argparse.ArgumentParser()
-
-analizador.add_argument("-f", "--file", dest = "filePath", nargs = 1, required = True, help = "Input file path")
-analizador.add_argument("-p", "--port", dest = "readPort", nargs = "?", default = 5000, const = 8080, type = int, help = "Port reading")
-
-argumentos = analizador.parse_args()
-
-print(argumentos.filePath, argumentos.readPort)
-
-servidor = socket.socket()
-servidor.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-servidor.bind(("127.0.0.1", 8080))
-servidor.listen(1)
-socket_cliente, direccion = servidor.accept()
-hilos_cliente = threading.Thread(target = cliente, args = (socket_cliente, direccion))
-hilos_cliente.start()
+while True:
+    #Aceptación de nueva conexión del cliente (C).
+    cliente_socket, cliente_direccion = proxy_socket.accept()
+    #Creación de hilo con el nuevo socket para manejar y administrar la solicitud (petición).
+    hilo_cliente = threading.Thread(target = manejador, args = (cliente_socket, cliente_direccion))
+    #Inicialización de hilo.
+    hilo_cliente.start()
