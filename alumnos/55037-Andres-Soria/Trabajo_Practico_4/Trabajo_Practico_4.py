@@ -7,6 +7,7 @@ import urllib.request, urllib.parse, urllib.error
 #Python Imaging Library
 from PIL import Image
 from bs4 import BeautifulSoup
+import Color_Imagenes
 
 #Función de ayuda al usuario.
 def OpcAyuda():
@@ -70,6 +71,7 @@ for link in links:
             #Eliminación de imagen de previo formato descargado. (".png")
             os.remove(ruta + ".png")
             contador = contador + 1
+            Color_Imagenes.color(ruta)
         #Manejo de errores.
         #Uso de módulo urllib.error para excepciones generadas por el módulo urllib.request.
         #HTTPError es útil cuando se manejan errores de HTTP exóticos, como solicitudes de autenticación.
@@ -95,6 +97,7 @@ for link in links:
             #Eliminación de imagen de previo formato descargado. (".jpg")
             os.remove(ruta + ".jpg")
             contador = contador + 1
+            Color_Imagenes.color(ruta)
         #Manejo de errores.
         #Uso de módulo urllib.error para excepciones generadas por el módulo urllib.request.
         #HTTPError es útil cuando se manejan errores de HTTP exóticos, como solicitudes de autenticación.
